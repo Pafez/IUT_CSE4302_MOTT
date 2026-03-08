@@ -1,0 +1,32 @@
+#pragma once
+
+#include <iostream>
+#include <sstream>
+using namespace std;
+
+class User;
+class Log;
+
+class Entry {
+    private : 
+    int userId1;
+    int userId2;
+    
+
+    public : 
+
+    Entry(){}
+
+    Entry(int a , int b){}
+    
+    ~Entry(){}
+
+    string get_Request(int a ,  int b , int amount){}
+
+        
+
+    string give_Request(int a , int b , int amount ){}
+
+};
+
+        
