@@ -1,39 +1,32 @@
 #pragma once
 #include"./Password.h"
-using namespace std;
 
 class Account{
-    string username;
+    int id;
+    std::string username;
     Password pass;
 public:
-    Account(){}
+    Account();
     //Account Creation
-    Account(string u, string p):pass(p), username(u){}
+    Account(std::string u, std::string p);
 
     //Reading Account from file
-    void setData(string u, string h, string s){
-        username = u;
-        pass.setHash(h);
-        pass.setSalt(s);
-    }
+    void setData(int i, std::string u, std::string h, std::string s);
 
     //Getters
-    string get_name() const{return username;}
-    string getHash(){return pass.getHash();}
-    string getSalt(){return pass.getSalt();}
+    int getID() const;
+    std::string get_name()const;
+    std::string getHash() const;
+    std::string getSalt() const;
 
     //Password verification
-    bool verify_pass(string p){
-        string temp;
-        p += pass.getSalt();
-        picosha2::hash256_hex_string(p, temp);
-        return (pass.getHash() == temp);
-    }
+    bool verify_pass(std::string p);
 
 };
 
-
-void save_acc(Account a);
-bool check_line(const string& line, Account& a);
-bool loadAcc(const string& searched, Account& a);
-bool loginAcc(const string& username, const string& password, Account &a);
+int getNextID();
+void saveCounter(int count);
+bool save_acc(const Account& a);
+bool check_line(const std::string& line, Account& a);
+bool loadAcc(const std::string& searched, Account& a);
+bool loginAcc(const std::string& username, const std::string& password, Account &a);

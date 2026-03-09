@@ -1,7 +1,45 @@
 #include"./Account.h"
+#include<iostream>
 #include<fstream>
 #include<sstream>
+
 using namespace std;
+
+Account::Account(): id(0){}
+Account::Account(std::string u, std::string p): id(getNextID()), pass(p), username(u){}
+
+int Account::getID() const{return id;}
+std::string Account::get_name() const{return username;}
+std::string Account::getHash() const{return pass.getHash();}
+std::string Account::getSalt() const{return pass.getSalt();}
+
+void Account::setData(int i, string u, string h, string s){
+        id = i;
+        username = u;
+        pass.setHash(h);
+        pass.setSalt(s);
+}
+
+bool Account::verify_pass(std::string p){
+        std::string temp;
+        p += pass.getSalt();
+        picosha2::hash256_hex_string(p, temp);
+        return (pass.getHash() == temp);
+}
+
+int getNextID() {
+    ifstream file("counter.txt");
+    int count = 1;
+    if (file) file >> count;
+    file.close();
+    saveCounter(count + 1);
+    return count;
+}
+
+void saveCounter(int count) {
+    ofstream file("counter.txt");
+    file << count;
+}
 
 /*Testing
 int main(){
@@ -21,35 +59,40 @@ int main(){
 }
 */
 
-void save_acc(Account a){
+bool save_acc(const Account& a){
+    Account temp;
+    if(loadAcc(a.get_name(), temp)){
+        cout << "Account \"" << a.get_name() << "\" already exists!\n";
+        return false;
+    }
+
     ofstream file("accounts.txt", ios::app);
     if (!file) {
         cout << "Error opening file!\n";
-        return;
+        return false;
     }
 
-    file << a.get_name() << '|' << a.getHash() << '|' << a.getSalt() << endl;
-
+    file << a.getID() << '|' << a.get_name() << '|' << a.getHash() << '|' << a.getSalt() << endl;
     cout << "Account: \"" << a.get_name() << "\" saved!" << endl;
 
     file.close();
+    return true;
 }
 
 bool check_line(const string& line, Account& a){
     stringstream ss(line);
-    string user, hash, salt;
+    string id, user, hash, salt;
 
+    getline(ss, id, '|');
     getline(ss, user, '|');
     getline(ss, hash, '|');
     getline(ss, salt);
 
-    if (!salt.empty() && salt.back() == '\r')   
-    salt.pop_back();
+    if (!salt.empty() && salt.back() == '\r') salt.pop_back();
 
-    if (user.empty() || hash.empty() || salt.empty())
-        return false;
+    if (user.empty() || hash.empty() || salt.empty()) return false;
 
-    a.setData(user, hash, salt);
+    a.setData(stoi(id), user, hash, salt);
     return true;
 }
 
