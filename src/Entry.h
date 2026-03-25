@@ -15,7 +15,7 @@ public :
 
     void setVal(std::vector<double> v);
     void setRef(std::string r);
-    virtual std::string serialize(int a,  int b, int amount) =0;
+    virtual std::string serialize() =0;
 };
 
 class Template1: public Entry{          //1->1
