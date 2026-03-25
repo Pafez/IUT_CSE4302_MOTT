@@ -1,19 +1,17 @@
 #pragma once
 
-class Account;
-
 class Transaction
 {
 private:
-    int accID;
-    double debtIncAmount;
+    const int accID;
+    const double debtIncAmount;
 public:
-    Transaction();
+    Transaction(int _accID, double _debtIncAmount);
     ~Transaction();
 
     int getAccID() const;
     double getDebtIncAmount() const;
 };
 
-
+ 
 

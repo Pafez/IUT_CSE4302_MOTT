@@ -1,6 +1,7 @@
 #include "Transaction.h"
 
-Transaction::Transaction(/* args */)
+Transaction::Transaction(int _accID, double _debtIncAmount):
+    accID(_accID), debtIncAmount(_debtIncAmount)
 {
 }
 
