@@ -133,3 +133,20 @@ bool loginAcc(const string& username, const string& password, Account &a){
     else return false;
 
 }
+
+std::unordered_map<int, Account> loadAllAccounts() {
+    std::unordered_map<int, Account> accounts;
+    std::ifstream file("accounts.txt");
+    std::string line;
+
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+
+        Account temp;
+        if (!check_line(line, temp)) continue;
+
+        accounts[temp.getID()] = temp;
+    }
+
+    return accounts;
+}

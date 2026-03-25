@@ -1,5 +1,6 @@
 #pragma once
 #include"./Password.h"
+#include <unordered_map>
 
 class Account{
     int id;
@@ -30,3 +31,4 @@ bool save_acc(const Account& a);
 bool check_line(const std::string& line, Account& a);
 bool loadAcc(const std::string& searched, Account& a);
 bool loginAcc(const std::string& username, const std::string& password, Account &a);
+std::unordered_map<int, Account> loadAllAccounts();
