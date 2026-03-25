@@ -74,7 +74,7 @@ void menuPage(){
     std::cin >> choice;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    if (choice == 1) ;
+    if (choice == 1) CLI::push(entryPage);
     else if (choice == 2) ;
     else if (choice == 3) ;  // exits
     else if (choice == 4){
@@ -84,3 +84,6 @@ void menuPage(){
     else std::cout << "Invalid choice.\n";
 }
 
+void entryPage(){
+    
+}
