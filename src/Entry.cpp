@@ -1,7 +1,6 @@
 #include "./Entry.h"
 #include "./Session.h"
 
-Entry::Entry(){}
 Entry::Entry(std::vector<int> rs, std::vector<double> vs, std::string ref){
     Account& temp = Session::getAccount();
     sender = temp.getID();
@@ -60,4 +59,33 @@ std::string Template3::serialize(){
     
     line+=reference;
     return line;
+}
+
+std::vector<Template1> Entry::linearizeEntry(Entry & _entry, template_t templateType) {
+    std::vector<Template1> dummy;
+    int totalReceipt  = _entry.recipients.size();
+    
+    switch (templateType)
+    {
+    case OneReciept_OneAmount:
+        dummy.push_back(Template1(_entry.recipients[0], _entry.values[0], _entry.reference));
+        break;
+    
+    case ManyReciept_OneAmount:
+        for (int i = 0; i < totalReceipt; i++) {
+            dummy.push_back(Template1(_entry.recipients[i], _entry.values[0], _entry.reference));
+        }
+        break;
+    
+    case ManyReciept_ManyAmount:
+        for (int i = 0; i < totalReceipt; i++) {
+            dummy.push_back(Template1(_entry.recipients[i], _entry.values[i], _entry.reference));
+        }
+        break;
+    
+    default:
+        break;
+    }
+
+    return dummy;
 }
