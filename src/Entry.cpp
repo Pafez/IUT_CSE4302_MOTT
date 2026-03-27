@@ -1,7 +1,6 @@
 #include "./Entry.h"
 #include "./Session.h"
 
-Entry::Entry(){}
 Entry::Entry(std::vector<int> rs, std::vector<double> vs, std::string ref){
     Account& temp = Session::getAccount();
     sender = temp.getID();
@@ -12,14 +11,15 @@ Entry::Entry(std::vector<int> rs, std::vector<double> vs, std::string ref){
 void Entry::setVal(std::vector<double> v){values = v;}
 void Entry::setRef(std::string r){reference = r;}
 
+
 Template1::Template1(int receiver, double amount, std::string ref): Entry(std::vector<int>(1,receiver), std::vector<double>(1,amount), ref){}
 
-std::string Template1::serialize(){
+std::string Template1::serialize(){ // returns a user readable line
     std::string line;
 
     line = "1|" + std::to_string(sender) + '|' + std::to_string(recipients[0]) + '|' + std::to_string(values[0]) + '|' + reference;
     return line;
-}
+}   
 
 Template2::Template2(std::vector<int> rl, int ta, std::string ref): Entry(rl){
     int number = rl.size();
@@ -29,9 +29,9 @@ Template2::Template2(std::vector<int> rl, int ta, std::string ref): Entry(rl){
 
     setVal(temp);
     setRef(ref);
-}
+}   
 
-std::string Template2::serialize(){
+std::string Template2::serialize(){//returns a user readable line
     int number = recipients.size();
     std::string line;
     line = "2|" + std::to_string(sender) + '|';
@@ -42,11 +42,11 @@ std::string Template2::serialize(){
 
     line+=std::to_string(values[0])  + '|' + reference;
     return line;
-}
+}   //returns a user readable line
 
 Template3::Template3(std::vector<int> rl, std::vector<double> al, std::string ref): Entry(rl,al,ref){}
 
-std::string Template3::serialize(){
+std::string Template3::serialize(){//returns a user readable line
     int number = recipients.size();
     std::string line;
     line = "3|" + std::to_string(sender) + '|';
@@ -60,4 +60,33 @@ std::string Template3::serialize(){
     
     line+=reference;
     return line;
+}    
+
+std::vector<Template1> Entry::linearizeEntry(Entry & _entry, template_t templateType) {//converts all templates to template1 for easier calculation
+    std::vector<Template1> dummy;
+    int totalReceipt  = _entry.recipients.size();
+    
+    switch (templateType)
+    {
+    case OneReciept_OneAmount:      //pushes one template1
+        dummy.push_back(Template1(_entry.recipients[0], _entry.values[0], _entry.reference));
+        break;
+    
+    case ManyReciept_OneAmount:     //converts template2 to many template1s with same amount
+        for (int i = 0; i < totalReceipt; i++) {
+            dummy.push_back(Template1(_entry.recipients[i], _entry.values[0], _entry.reference));
+        }
+        break;
+    
+    case ManyReciept_ManyAmount:        //converts template3 to many unique template1s
+        for (int i = 0; i < totalReceipt; i++) {
+            dummy.push_back(Template1(_entry.recipients[i], _entry.values[i], _entry.reference));
+        }
+        break;
+    
+    default:
+        break;
+    }
+
+    return dummy;
 }
