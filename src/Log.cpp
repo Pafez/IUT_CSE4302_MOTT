@@ -2,11 +2,22 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <stdexcept>
 
 Log::Log(int _accountID)
 {
     accountID = _accountID;
-    deserialize();
+
+    try
+    {
+        deserialize();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Log load failed: " << e.what() << '\n';
+        nextRequestID = 1;
+        requestHistory.clear();
+    }
 }
 
 void Log::serialize()
@@ -14,9 +25,12 @@ void Log::serialize()
     std::ofstream filen("../data/logs" + std::to_string(accountID) + ".txt");
 
     if (!filen)
-        return;
+        throw std::runtime_error("Could not open log file for writing.");
 
     filen << nextRequestID << '\n';
+
+    if (!filen)
+        throw std::runtime_error("Failed while writing log nextRequestID.");
 
     for (int i = 0; i < requestHistory.size(); i++)
     {
@@ -24,6 +38,9 @@ void Log::serialize()
               << requestHistory[i].requestFrom << '|'
               << requestHistory[i].amount << '|'
               << requestHistory[i].ref << '\n';
+
+        if (!filen)
+            throw std::runtime_error("Failed while writing log request data.");
     }
 }
 
@@ -42,7 +59,14 @@ void Log::deserialize()
 
     if (std::getline(filen, line))
     {
-        nextRequestID = std::stoi(line);
+        try
+        {
+            nextRequestID = std::stoi(line);
+        }
+        catch (const std::exception &)
+        {
+            throw std::runtime_error("Invalid log header: nextRequestID is corrupted.");
+        }
     }
     else
     {
@@ -50,29 +74,51 @@ void Log::deserialize()
         return;
     }
 
+    int lineNumber = 1;
+
     while (std::getline(filen, line))
     {
-        std::stringstream ss(line);
-        std::string reqid, req, amountStr, ref;
+        lineNumber++;
 
-        std::getline(ss, reqid, '|');
-        std::getline(ss, req, '|');
-        std::getline(ss, amountStr, '|');
-        std::getline(ss, ref);
+        try
+        {
+            std::stringstream ss(line);
+            std::string reqid, req, amountStr, ref;
 
-        int rid = std::stoi(reqid);
-        int requestFrom = std::stoi(req);
-        double amount = std::stod(amountStr);
+            if (!std::getline(ss, reqid, '|') ||
+                !std::getline(ss, req, '|') ||
+                !std::getline(ss, amountStr, '|') ||
+                !std::getline(ss, ref))
+            {
+                throw std::runtime_error("Wrong field format");
+            }
 
-        Request temp(rid, requestFrom, amount, ref);
-        requestHistory.push_back(temp);
+            int rid = std::stoi(reqid);
+            int requestFrom = std::stoi(req);
+            double amount = std::stod(amountStr);
+
+            Request temp(rid, requestFrom, amount, ref);
+            requestHistory.push_back(temp);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Skipping bad log line " << lineNumber
+                      << ": " << e.what() << '\n';
+        }
     }
 }
 
-void Log::addLogEntry(int _reqFrom, double _amount, std::string _ref)
+void Log::addRequest(int _reqFrom, double _amount, std::string _ref)
 {
-    requestHistory.push_front(Request(nextRequestID, _reqFrom, _amount, _ref));
-    nextRequestID++;
+    try
+    {
+        requestHistory.push_front(Request(nextRequestID, _reqFrom, _amount, _ref));
+        nextRequestID++;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Failed to add log request: " << e.what() << '\n';
+    }
 }
 
 const std::deque<Request> &Log::getLogs() const
@@ -99,5 +145,12 @@ void Log::showLogs() const
 
 Log::~Log()
 {
-    serialize();
+    try
+    {
+        serialize();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Log save failed: " << e.what() << '\n';
+    }
 }
