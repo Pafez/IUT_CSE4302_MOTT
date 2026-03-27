@@ -3,6 +3,9 @@
 #include "./Session.h"
 #include "./Account.h"
 #include "./Entry.h"
+#include "./BackLog.h"
+#include <cctype>
+#include <exception>
 #include <iostream>
 #include <limits>
 
@@ -77,8 +80,8 @@ void menuPage(){
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     if (choice == 1) CLI::push(entryPage);
-    else if (choice == 2) ;
-    else if (choice == 3) ;  
+    else if (choice == 2) CLI::push(backlogPage);
+    else if (choice == 3) CLI::push(mainlogPage);  
     else if (choice == 4){
         Session::logout();
         CLI::pop();
@@ -108,36 +111,13 @@ void entryPage(){
 void template1Page(){
     std::cout << "\n---One to One Request---\n";
     
-    Retry:
-    std::cout << "Enter Recipient: ";
-    std::string username;
-    std::cin >> username;
-    Account temp;
-    if(!loadAcc(username, temp)){
-        std::cout << "Invalid Username. Try again.\n";
-        goto Retry;
-    }
-
-    std::cout << "\nEnter Amount: ";
-    double amount;
-    std::cin >> amount;
-
-    std::cout << "\nEnter Reference: ";
-    std::string reference;
-    std::cin >> reference;
-
-    Template1 a(temp.getID(), amount, reference);
-}
-
-void template1Page(){
-    std::cout << "\n---One to One Request---\n";
-    
     Account temp;
     bool validRecipient = false;
     while(!validRecipient){
         std::cout << "Enter Recipient Username: ";
         std::string username;
         std::cin >> username;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         
         if(!loadAcc(username, temp)){
             std::cout << "Invalid Username. Try again.\n";
@@ -149,11 +129,13 @@ void template1Page(){
     double amount ;
     std::cout << "\nEnter Amount: ";
     std::cin >> amount;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     std::cout << "\nEnter Reference: ";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::string reference;
     std::getline(std::cin, reference);
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     Template1 a(temp.getID(), amount, reference);
     std::cout << "Entry created successfully!\n";
@@ -170,6 +152,7 @@ void template2Page(){
     while(true){
         std::cout << "Enter Recipient Username (or 'done' to finish): ";
         std::cin >> input;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         
         if(input == "done"){
             if(recipientIDs.empty()){
@@ -191,10 +174,12 @@ void template2Page(){
     std::cout << "\nEnter Total Amount: ";
     int totalAmount;
     std::cin >> totalAmount;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     std::cout << "\nEnter Reference: ";
     std::string reference;
     std::cin >> reference;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     Template2 a(recipientIDs, totalAmount, reference);
     CLI::pop();  
@@ -210,6 +195,7 @@ void template3Page(){
     while(true){
         std::cout << "Enter Recipient Username (or 'done' to finish): ";
         std::cin >> input;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         
         if(input == "done"){
             if(recipientIDs.empty()){
@@ -228,6 +214,7 @@ void template3Page(){
             std::cout << "Enter Amount for " << input << ": ";
             double amount;
             std::cin >> amount;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             amounts.push_back(amount);
             std::cout << "Added " << input << " with amount " << amount << ".\n";
         }
@@ -236,7 +223,94 @@ void template3Page(){
     std::cout << "\nEnter Reference: ";
     std::string reference;
     std::cin >> reference;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     Template3 a(recipientIDs, amounts, reference);
     CLI::pop();  
+}
+
+void backlogPage(){
+    std::unordered_map<int, Account> accData = loadAllAccounts();
+    std::cout << "--------Pending requests--------\n";
+
+    Account temp = Session::getAccount();
+    BackLog log(temp.getID());
+    int size = log.currentRequests.size();
+
+    if(size){
+        for(int i=0; i<size; i++){
+            std::cout << i+1 << ". ";
+            int fromID = log.currentRequests[i].requestFrom;
+            double amount = log.currentRequests[i].amount;
+            std::string reference = log.currentRequests[i].ref;
+            Account fromAcc = accData[fromID];
+
+            std::cout << fromAcc.get_name() + ": " + std::to_string(amount) + ". Reference: " + reference + "\n"; //1. Name: Amount. Reference
+        }
+        bool done = false;
+
+        while (!done)
+        {
+            std::cout << "Choose which to respond to or \"done\" if done: ";
+            std::string choice;
+            
+            while(true){
+                std::cin >> choice;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                if(choice == "done" or choice == "Done"){
+                    done = true;
+                    break;
+                }
+                else{
+                    int int_choice;
+                    try{
+                        int_choice = std::stoi(choice);
+                    }
+                    catch(std::exception& e){
+                        std::cout << "\nInvalid."
+                        << "\nTry again: ";
+                        continue;
+                    }
+                    if(int_choice<1 or int_choice>size){
+                        std::cout << "\nInvalid choice."
+                        << "\nTry again: ";
+                    }
+                    else break;
+                }
+            }
+
+            if(done) break;
+
+            std::cout << "\nAccept? (Y/N) or C for Cancel: ";
+            char ans;
+            while(true){
+                std::cin >> ans;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                ans = std::toupper(ans);
+                if(ans != 'Y' and ans != 'N' and ans != 'C'){
+                    std::cout << "\nPlease make valid choice."
+                    << "\nTry Again: ";
+                }
+                else break;
+            }
+            if(ans == 'C') continue;
+            else if(ans == 'Y'){
+                std::cout << "Request Accepted!";
+            }
+            else{                       //For N
+                std::cout << "Request Denied!";
+            }
+
+        }
+        
+
+    }
+    else{
+        std::cout << "No Pending Requests\n";
+    }
+    CLI::pop();
+}
+
+void mainlogPage(){
+
 }

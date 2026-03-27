@@ -3,7 +3,7 @@
 Request::Request(int _reqID, int _reqFrom, double _amount, std::string _ref) : requestID(_reqID),
                                                                                requestFrom(_reqFrom),
                                                                                amount(_amount),
-                                                                               ref(ref)
+                                                                               ref(_ref)
 {
 }
 

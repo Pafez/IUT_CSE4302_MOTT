@@ -11,3 +11,5 @@ void entryPage();
 void template1Page();
 void template2Page();
 void template3Page();
+void backlogPage();
+void mainlogPage();

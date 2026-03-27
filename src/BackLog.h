@@ -11,10 +11,10 @@ class BackLog
 {
 private:
     int accountID;
-    std::deque<Request> currentRequests;
     int nextRequestID;
 
 public:
+    std::deque<Request> currentRequests;
     BackLog(int _accountID);
     ~BackLog();
 
