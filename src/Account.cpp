@@ -67,7 +67,7 @@ bool save_acc(const Account& a){
     }
 
     ofstream file("../data/accounts.txt", ios::app);
-    if (!file) {
+    if (!file.is_open()) {
         cout << "Error opening file!\n";
         return false;
     }

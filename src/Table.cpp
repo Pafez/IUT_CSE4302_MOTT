@@ -88,8 +88,8 @@ bool Table::hasAccount(int accID) const
 
 void Table::addAccount(int accID, double initialDebt)
 {
-    auto [it, inserted] = accDebts.emplace(accID, initialDebt);
-    if (!inserted) {
+    auto result = accDebts.emplace(accID, initialDebt);
+    if (!result.second) {
         throw AccountAlreadyExists();
     }
 }

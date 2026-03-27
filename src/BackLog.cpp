@@ -53,8 +53,7 @@ void BackLog::deserialize()
         int requestFrom = std::stoi(req);
         double amount = std::stod(amountStr);
 
-        Request temp(rid, requestFrom, amount, ref);
-        currentRequests.push_back(temp);
+        currentRequests.push_back(Request (rid, requestFrom, amount, ref));
     }
 }
 
