@@ -56,16 +56,6 @@ But how does he keep track? **The MOTT system!**
 
 He won't have to worry about not having proof of his debts and payments, nor about keeping track of them. Negative balances mean others owe him—the system handles it all.
 
-## Getting Started
-
-```powershell
-# Compile
-g++ main.cpp -o mott
-
-# Run
-.\mott
-```
-
 ## Target Users
 
 - Roommates sharing rent and utilities
@@ -75,3 +65,17 @@ g++ main.cpp -o mott
 ## License
 
 Academic project for IUT CSE4302 - Object-Oriented Programming
+
+## Getting Started
+
+```powershell
+# Compile
+g++ ./src/*.cpp -o mott
+
+# Run
+.\mott
+```
+
+## Known Issues
+
+No known issues so far
