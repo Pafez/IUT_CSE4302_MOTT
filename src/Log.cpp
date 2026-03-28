@@ -11,7 +11,7 @@ Log::Log(int _accountID)
 
 void Log::serialize()
 {
-    std::ofstream filen("../data/logs" + std::to_string(accountID) + ".txt");
+    std::ofstream filen("data/logs" + std::to_string(accountID) + ".txt");
 
     if (!filen)
         return;
@@ -29,7 +29,7 @@ void Log::serialize()
 
 void Log::deserialize()
 {
-    std::ifstream filen("../data/logs" + std::to_string(accountID) + ".txt");
+    std::ifstream filen("data/logs" + std::to_string(accountID) + ".txt");
     std::string line;
 
     requestHistory.clear();

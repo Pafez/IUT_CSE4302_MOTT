@@ -8,6 +8,14 @@ Entry::Entry(std::vector<int> rs, std::vector<double> vs, std::string ref){
     values = vs;
     reference = ref;
 }
+
+std::vector<int> Entry::getRecipients() const {
+    return recipients;
+}
+std::vector<double> Entry::getValues() const {
+    return values;
+}
+
 void Entry::setVal(std::vector<double> v){values = v;}
 void Entry::setRef(std::string r){reference = r;}
 
@@ -21,7 +29,7 @@ std::string Template1::serialize(){ // returns a user readable line
     return line;
 }   
 
-Template2::Template2(std::vector<int> rl, int ta, std::string ref): Entry(rl){
+Template2::Template2(std::vector<int> rl, double ta, std::string ref): Entry(rl){
     int number = rl.size();
     double amounts = (double)ta/number;
     std::vector<double> temp;

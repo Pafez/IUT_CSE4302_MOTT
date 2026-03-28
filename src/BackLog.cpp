@@ -10,7 +10,7 @@ BackLog::BackLog(int _accountID)
 
 void BackLog::serialize()
 {
-    std::ofstream filen("../data/backlogs" + std::to_string(accountID) + ".txt");
+    std::ofstream filen("data/backlogs" + std::to_string(accountID) + ".txt");
 
     filen << nextRequestID << '\n';
 
@@ -26,7 +26,7 @@ void BackLog::serialize()
 
 void BackLog::deserialize()
 {
-    std::ifstream filen("../data/backlogs" + std::to_string(accountID) + ".txt");
+    std::ifstream filen("data/backlogs" + std::to_string(accountID) + ".txt");
     std::string line;
 
     if (std::getline(filen, line))

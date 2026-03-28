@@ -43,5 +43,5 @@ public:
     bool hasAccount(int accID) const;
 
     void addAccount(int accID, double initialDebt = 0.0);
-    void processTransaction(const Transaction & transaction);
+    void processTransaction(const Transaction transaction);
 };

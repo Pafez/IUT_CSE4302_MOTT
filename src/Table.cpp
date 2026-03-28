@@ -94,7 +94,7 @@ void Table::addAccount(int accID, double initialDebt)
     }
 }
 
-void Table::processTransaction(const Transaction &transaction)
+void Table::processTransaction(const Transaction transaction)
 {
     if (accDebts.find(transaction.getAccID()) == accDebts.end())
         throw AccountNotFound();

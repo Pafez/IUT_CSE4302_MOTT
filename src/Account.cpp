@@ -28,7 +28,7 @@ bool Account::verify_pass(std::string p){
 }
 
 int getNextID() {
-    ifstream file("../data/counter.txt");
+    ifstream file("data/counter.txt");
     int count = 1;
     if (file) file >> count;
     file.close();
@@ -37,7 +37,7 @@ int getNextID() {
 }
 
 void saveCounter(int count) {
-    ofstream file("../data/counter.txt");
+    ofstream file("data/counter.txt");
     file << count;
 }
 
@@ -66,7 +66,7 @@ bool save_acc(const Account& a){
         return false;
     }
 
-    ofstream file("../data/accounts.txt", ios::app);
+    ofstream file("data/accounts.txt", ios::app);
     if (!file.is_open()) {
         cout << "Error opening file!\n";
         return false;
@@ -97,7 +97,7 @@ bool check_line(const string& line, Account& a){
 }
 
 bool loadAcc(const string& searched, Account& a){
-    ifstream file("../data/accounts.txt");
+    ifstream file("data/accounts.txt");
 
     string line;
 
@@ -136,7 +136,7 @@ bool loginAcc(const string& username, const string& password, Account &a){
 
 std::unordered_map<int, Account> loadAllAccounts() {
     std::unordered_map<int, Account> accounts;
-    std::ifstream file("../data/accounts.txt");
+    std::ifstream file("data/accounts.txt");
     std::string line;
 
     while (getline(file, line)) {

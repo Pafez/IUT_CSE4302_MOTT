@@ -3,8 +3,8 @@
 class Transaction
 {
 private:
-    const int accID;
-    const double debtIncAmount;
+    int accID;
+    double debtIncAmount;
 public:
     Transaction(int _accID, double _debtIncAmount);
     ~Transaction();

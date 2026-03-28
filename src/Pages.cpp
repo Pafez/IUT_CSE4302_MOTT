@@ -4,6 +4,9 @@
 #include "./Account.h"
 #include "./Entry.h"
 #include "./BackLog.h"
+#include "./Log.h"
+#include "./Transaction.h"
+#include "./Table.h"
 #include <cctype>
 #include <exception>
 #include <iostream>
@@ -28,6 +31,7 @@ void startPage(){
 
 void registerPage(){
     std::string username, password, confirm;
+    Table table(0, 0);
 
     std::cout << "\n--- Register ---\n"
     << "Username: ";  
@@ -40,7 +44,16 @@ void registerPage(){
     if(password != confirm) std::cout << "Passwords do not match!\n";
     else{
         Account a(username, password);
-        if (save_acc(a)) std::cout << "Account created! Please log in.\n";
+        if (save_acc(a)) {
+            std::cout << "Account created! Please log in.\n";
+            try {
+                table.addAccount(a.getID());
+            }
+            catch (const std::exception &) {
+                std::cout << "Username already exists\n";
+                return;
+            }
+        }
     }
 
     CLI::pop();  // back to startPage
@@ -72,17 +85,28 @@ void menuPage(){
     << "1. Make Entry\n"
     << "2. Pending Transactions\n"
     << "3. Print Transaction Log\n"
-    << "4. Logout\n"
+    << "4. Show Table Balance\n"
+    << "5. Logout\n"
     << "Choice: ";
 
-    int choice;
-    std::cin >> choice;
+    std::string choiceS;
+    std::cin >> choiceS;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    int choice;
+    try {
+        choice = std::stoi(choiceS);
+    }
+    catch (std::exception &) {
+        std::cout << "Invalid choice. Please use a Number.\n";
+        return;
+    }
 
     if (choice == 1) CLI::push(entryPage);
     else if (choice == 2) CLI::push(backlogPage);
-    else if (choice == 3) CLI::push(mainlogPage);  
-    else if (choice == 4){
+    else if (choice == 3) CLI::push(userlogPage);
+    else if (choice == 4) CLI::push(balancePage);
+    else if (choice == 5){
         Session::logout();
         CLI::pop();
     }
@@ -93,13 +117,22 @@ void entryPage(){
     std::cout << "\n---Select Entry Type---\n"
     << "1. One to One\n"
     << "2. One to Many (Divide an amount equally)\n"
-    << "3. One to Many (Seperate amounts)\n"
+    << "3. One to Many (Separate amounts)\n"
     << "4. Back\n"
     << "Choice: ";
     
-    int choice;
-    std::cin >> choice;
+    std::string choiceS;
+    std::cin >> choiceS;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    int choice;
+    try {
+        choice = std::stoi(choiceS);
+    }
+    catch (std::exception &) {
+        std::cout << "Invalid choice. Please use a Number.\n";
+        return;
+    }
 
     if(choice == 1) CLI::push(template1Page);
     else if (choice == 2) CLI::push(template2Page);
@@ -132,13 +165,14 @@ void template1Page(){
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     std::cout << "\nEnter Reference: ";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::string reference;
     std::getline(std::cin, reference);
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     Template1 a(temp.getID(), amount, reference);
     std::cout << "Entry created successfully!\n";
+
+    BackLog thisBackLog(temp.getID());
+    thisBackLog.addRequest(Session::getAccount().getID(), amount, reference);
     
     CLI::pop();  
 }
@@ -178,10 +212,17 @@ void template2Page(){
 
     std::cout << "\nEnter Reference: ";
     std::string reference;
-    std::cin >> reference;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::getline(std::cin, reference);
 
     Template2 a(recipientIDs, totalAmount, reference);
+    std::cout << "Entry created successfully!\n";
+
+    std::vector<Template1> linearEntries = Entry::linearizeEntry(a, ManyReciept_OneAmount);
+    for (int i = 0; i < linearEntries.size(); i++) {
+        BackLog thisBackLog(linearEntries[i].getRecipients()[0]);
+        thisBackLog.addRequest(Session::getAccount().getID(), linearEntries[i].getValues()[0], reference);
+    }
+         
     CLI::pop();  
 }
 
@@ -222,10 +263,17 @@ void template3Page(){
 
     std::cout << "\nEnter Reference: ";
     std::string reference;
-    std::cin >> reference;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::getline(std::cin, reference);
 
     Template3 a(recipientIDs, amounts, reference);
+    std::cout << "Entry created successfully!\n";
+
+    std::vector<Template1> linearEntries = Entry::linearizeEntry(a, ManyReciept_ManyAmount);
+    for (int i = 0; i < linearEntries.size(); i++) {
+        BackLog thisBackLog(linearEntries[i].getRecipients()[0]);
+        thisBackLog.addRequest(Session::getAccount().getID(), linearEntries[i].getValues()[0], reference);
+    }
+
     CLI::pop();  
 }
 
@@ -233,8 +281,10 @@ void backlogPage(){
     std::unordered_map<int, Account> accData = loadAllAccounts();
     std::cout << "--------Pending requests--------\n";
 
-    Account temp = Session::getAccount();
-    BackLog log(temp.getID());
+    Account currentAccount = Session::getAccount();
+    BackLog log(currentAccount.getID());
+    Log history(currentAccount.getID());
+    Table currentTable(0, 0);
     int size = log.currentRequests.size();
 
     if(size){
@@ -249,10 +299,11 @@ void backlogPage(){
         }
         bool done = false;
 
-        while (!done)
+        while (!done and log.currentRequests.size())
         {
             std::cout << "Choose which to respond to or \"done\" if done: ";
             std::string choice;
+            int int_choice;
             
             while(true){
                 std::cin >> choice;
@@ -262,7 +313,6 @@ void backlogPage(){
                     break;
                 }
                 else{
-                    int int_choice;
                     try{
                         int_choice = std::stoi(choice);
                     }
@@ -271,7 +321,8 @@ void backlogPage(){
                         << "\nTry again: ";
                         continue;
                     }
-                    if(int_choice<1 or int_choice>size){
+                    int currentSize = static_cast<int>(log.currentRequests.size());
+                    if(int_choice<1 or int_choice>currentSize){
                         std::cout << "\nInvalid choice."
                         << "\nTry again: ";
                     }
@@ -296,14 +347,22 @@ void backlogPage(){
             if(ans == 'C') continue;
             else if(ans == 'Y'){
                 std::cout << "Request Accepted!";
+
+                const Request selectedRequest = log.currentRequests[int_choice-1];
+
+                Transaction payerTransaction(selectedRequest.requestFrom, -selectedRequest.amount);
+                Transaction payeeTransaction(currentAccount.getID(), selectedRequest.amount);
+                currentTable.processTransaction(payerTransaction);
+                currentTable.processTransaction(payeeTransaction);
+                history.addLogEntry(selectedRequest.requestFrom, selectedRequest.amount, selectedRequest.ref);
+                Log(selectedRequest.requestFrom).addLogEntry(currentAccount.getID(), -selectedRequest.amount, selectedRequest.ref);
+                log.removeRequest(selectedRequest.requestID);
             }
             else{                       //For N
                 std::cout << "Request Denied!";
+                log.removeRequest(log.currentRequests[int_choice-1].requestID);
             }
-
         }
-        
-
     }
     else{
         std::cout << "No Pending Requests\n";
@@ -311,6 +370,65 @@ void backlogPage(){
     CLI::pop();
 }
 
-void mainlogPage(){
+void userlogPage(){
+    std::unordered_map<int, Account> accData = loadAllAccounts();
+    std::cout << "---------------LOG---------------\n";
 
+    Account currentAccount = Session::getAccount();
+    Log log(currentAccount.getID());
+    Table currentTable(0, 0);
+    int size = log.getLogs().size();
+
+    if(size){
+        for(int i=0; i<size; i++){
+            std::cout << i+1 << ". ";
+            int fromID = log.getLogs()[i].requestFrom;
+            double amount = log.getLogs()[i].amount;
+            std::string reference = log.getLogs()[i].ref;
+            Account fromAcc = accData[fromID];
+
+            std::cout << fromAcc.get_name() + ": " + std::to_string(amount) + ". Reference: " + reference + "\n"; //1. Name: Amount. Reference
+        }
+        std::cout << "\nEnter anything to go Back.\n";
+        std::string why;
+        std::getline(std::cin, why);
+    }
+    else{
+        std::cout << "Nothing to see!\n";
+    }
+    CLI::pop();
+}
+
+void balancePage(){
+    std::unordered_map<int, Account> accData = loadAllAccounts();
+    Table currentTable(0, 0);
+    Account currentAccount = Session::getAccount();
+    int currentID = currentAccount.getID();
+
+    double currentUserDebt = 0.0;
+    if (currentTable.hasAccount(currentID)) {
+        currentUserDebt = currentTable.getAccDebt(currentID);
+    }
+
+    std::cout << "Your Balance: " << -currentUserDebt << "\n\n";
+    std::cout << "Others' Balance:\n";
+
+    for (const auto& kv : accData) {
+        int accID = kv.first;
+        if (accID == currentID) {
+            continue;
+        }
+        if (!currentTable.hasAccount(accID)) {
+            continue;
+        }
+
+        const Account& account = kv.second;
+        double userDebt = currentTable.getAccDebt(accID);
+        std::cout << account.get_name() << ": " << -userDebt << "\n";
+    }
+
+    std::cout << "\nEnter anything to go Back.\n";
+    std::string input;
+    std::getline(std::cin, input);
+    CLI::pop();
 }

@@ -21,6 +21,9 @@ public :
     Entry() {}
     Entry(std::vector<int> rs, std::vector<double> vs=std::vector<double>(0), std::string ref="");
 
+    std::vector<int> getRecipients() const;
+    std::vector<double> getValues() const;
+
     void setVal(std::vector<double> v);
     void setRef(std::string r);
     virtual std::string serialize() =0;
@@ -36,7 +39,7 @@ class Template1: public Entry{          //1->1
 
 class Template2 : public Entry {        //1->many but tamount/many per person
 public:
-    Template2(std::vector<int> rl, int ta, std::string ref);
+    Template2(std::vector<int> rl, double ta, std::string ref);
     std::string serialize();
 };
 
